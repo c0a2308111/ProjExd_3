@@ -172,7 +172,7 @@ def main():
     bg_img = pg.image.load("fig/pg_bg.jpg")
     bird = Bird((300, 200))
     bombs = [Bomb((255, 0, 0), 10) for _ in range(NUM_OF_BOMBS)] 
-    beam = None
+    beams = []  # ビームを管理するリスト
     score = Score()  # Scoreインスタンス生成
     clock = pg.time.Clock()
     tmr = 0
@@ -182,13 +182,14 @@ def main():
             if event.type == pg.QUIT:
                 return
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
-                beam = Beam(bird)  # スペースキー押下でビーム生成
+                # スペースキー押下で新しいビームをリストに追加
+                beams.append(Beam(bird))
 
         screen.blit(bg_img, [0, 0])
 
+        # ゲームオーバーの判定
         for bomb in bombs:
             if bird.rct.colliderect(bomb.rct):
-                # ゲームオーバー時の処理
                 bird.change_img(8, screen)
                 fonto = pg.font.Font(None, 80)
                 txt = fonto.render("Game Over", True, (255, 0, 0))
@@ -198,27 +199,37 @@ def main():
                 time.sleep(1)
                 return
 
-        for i, bomb in enumerate(bombs):
-            if beam is not None and bomb is not None:
-                if beam.rct.colliderect(bomb.rct):  # ビームが爆弾を撃ち落とす
-                    beam = None
-                    bombs[i] = None
-                    bird.change_img(6, screen)
-                    score.score += 1  # スコアを1増やす
-                    pg.display.update()
+        # 爆弾とビームの衝突判定
+        for bomb in bombs:
+            for i, beam in enumerate(beams):
+                if beam.rct.colliderect(bomb.rct):  # ビームが爆弾に衝突
+                    beams[i] = None  # 衝突したビームをNoneにする
+                    bombs.remove(bomb)  # 爆弾を削除
+                    score.score += 1  # スコアを増加
+                    break  # 爆弾は一度だけ処理される
 
+        # ビームリストを更新（Noneでない要素と画面内にあるものだけ残す）
+        beams = [beam for beam in beams if beam is not None and check_bound(beam.rct) == (True, True)]
+
+        # こうかとんの移動と描画
         key_lst = pg.key.get_pressed()
         bird.update(key_lst, screen)
-        bombs = [bomb for bomb in bombs if bomb is not None]  # Noneでない爆弾を残す
+
+        # 爆弾の更新と描画
         for bomb in bombs:
             bomb.update(screen)
-        if beam is not None:
+
+        # ビームの更新と描画
+        for beam in beams:
             beam.update(screen)
 
-        score.update(screen)  # スコアを画面に描画
+        # スコアの更新と描画
+        score.update(screen)
+
         pg.display.update()
         tmr += 1
         clock.tick(50)
+  
 
 
 
