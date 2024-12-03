@@ -200,16 +200,28 @@ def main():
                 return
 
         # 爆弾とビームの衝突判定
+        # 爆弾とビームの衝突判定
+        remove_bombs = []  # 削除予定の爆弾を記録
+        remove_beams = []  # 削除予定のビームを記録
         for bomb in bombs:
-            for i, beam in enumerate(beams):
+            for beam in beams:
                 if beam.rct.colliderect(bomb.rct):  # ビームが爆弾に衝突
-                    beams[i] = None  # 衝突したビームをNoneにする
-                    bombs.remove(bomb)  # 爆弾を削除
+                    remove_beams.append(beam)  # 衝突したビームを記録
+                    remove_bombs.append(bomb)  # 衝突した爆弾を記録
                     score.score += 1  # スコアを増加
                     break  # 爆弾は一度だけ処理される
 
-        # ビームリストを更新（Noneでない要素と画面内にあるものだけ残す）
-        beams = [beam for beam in beams if beam is not None and check_bound(beam.rct) == (True, True)]
+        # 衝突したビームと爆弾を削除
+        for beam in remove_beams:
+            if beam in beams:
+                beams.remove(beam)
+        for bomb in remove_bombs:
+            if bomb in bombs:
+                bombs.remove(bomb)
+
+        # ビームリストを更新（画面内にあるものだけ残す）
+        beams = [beam for beam in beams if check_bound(beam.rct) == (True, True)]
+
 
         # こうかとんの移動と描画
         key_lst = pg.key.get_pressed()
@@ -230,6 +242,7 @@ def main():
         tmr += 1
         clock.tick(50)
   
+
 
 
 
